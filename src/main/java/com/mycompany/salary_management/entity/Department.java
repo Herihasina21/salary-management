@@ -8,8 +8,10 @@ import lombok.Setter;
 @Setter
 @Entity
 public class Department {
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "department_sequence")
+    @SequenceGenerator(name = "department_sequence", sequenceName = "department_id_seq", allocationSize = 1)
     private Long id;
-    private String name;           // Ex: "RH", "Comptabilité"
-    private String code;           // Ex: "HR", "ACC"
+    private String name;
+    private String code;
 }

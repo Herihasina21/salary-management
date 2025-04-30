@@ -9,17 +9,18 @@ import java.time.LocalDate;
 @Setter
 @Entity
 public class Employee {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private String firstName;
     private String email;
     private String phone;
     private String address;
-    private String position;       // Poste (ex: "Développeur")
-    private LocalDate hireDate;     // Date d'embauche
-    private String contractType;    // CDI, CDD, etc.
+    private String position;
+    private LocalDate hireDate;
+    private String contractType;
 
-    @ManyToOne
-    private Department department; // Service/Département
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private Department department;
 }

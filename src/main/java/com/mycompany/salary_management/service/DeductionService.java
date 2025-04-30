@@ -4,6 +4,7 @@ import com.mycompany.salary_management.entity.Deduction;
 import com.mycompany.salary_management.repository.DeductionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class DeductionService {
@@ -14,25 +15,27 @@ public class DeductionService {
         return deductionRepository.save(deduction);
     }
 
-    public Iterable<Deduction> getAllDeduction() {
-        return deductionRepository.findAll();
+    public List<Deduction> getAllDeduction() {
+        return (List<Deduction>) deductionRepository.findAll();
     }
 
     public Deduction getDeductionById(Long id) {
         return deductionRepository.findById(id).orElse(null);
     }
 
+    public boolean existsById(Long id) {
+        return deductionRepository.existsById(id);
+    }
+
     public Deduction updateDeduction(Long id, Deduction deduction) {
         if (deductionRepository.existsById(id)) {
-            deduction.setId(id);  // Garder le même ID lors de la mise à jour
-            return deductionRepository.save(deduction);  // Enregistrer l'employé mis à jour
+            deduction.setId(id);
+            return deductionRepository.save(deduction);
         }
-        return null;  // Si l'employé n'existe pas, retourner null
+        return null;
     }
 
     public void deleteDeduction(Long id) {
         deductionRepository.deleteById(id);
     }
-
-
 }

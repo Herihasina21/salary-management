@@ -5,6 +5,8 @@ import com.mycompany.salary_management.repository.SalaryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class SalaryService {
     @Autowired
@@ -14,12 +16,16 @@ public class SalaryService {
         return salaryRepository.save(salary);
     }
 
-    public Iterable<Salary> getAllSalary(){
-        return salaryRepository.findAll();
+    public List<Salary> getAllSalary(){
+        return (List<Salary>) salaryRepository.findAll();
     }
 
     public Salary getSalaryById(Long id){
         return salaryRepository.findById(id).orElse(null);
+    }
+
+    public boolean existsById(Long id) {
+        return salaryRepository.existsById(id);
     }
 
     public Salary updateSalary(Long id, Salary salary){

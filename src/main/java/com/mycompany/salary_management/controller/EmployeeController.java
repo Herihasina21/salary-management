@@ -2,8 +2,13 @@ package com.mycompany.salary_management.controller;
 
 import com.mycompany.salary_management.entity.Employee;
 import com.mycompany.salary_management.service.EmployeeService;
+import com.mycompany.salary_management.service.DepartmentService; // Ajout de DepartmentService
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/employees")
@@ -12,34 +17,71 @@ public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
-    // POST : Créer un nouvel employé
+    @Autowired
+    private DepartmentService departmentService; // Injection de DepartmentService
+
+    private ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
+        Map<String, Object> response = Map.of(
+                "success", success,
+                "message", message,
+                "data", data
+        );
+        return ResponseEntity.status(status).body(response);
+    }
+
     @PostMapping
-    public Employee addEmployee(@RequestBody Employee employee) {
-        return employeeService.createEmployee(employee);
+    public ResponseEntity<Map<String, Object>> addEmployee(@RequestBody Employee employee) {
+        try {
+            Employee savedEmployee = employeeService.createEmployee(employee);
+            return buildResponse(true, "Employé ajouté avec succès", savedEmployee, HttpStatus.CREATED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return buildResponse(false, "Erreur lors de l'ajout de l'employé: " + e.getMessage(), Map.of(), HttpStatus.BAD_REQUEST);
+        }
     }
 
-    // GET : Employee retra
     @GetMapping
-    public Iterable<Employee> getAllEmployees() {
-        return employeeService.getAllEmployees();
+    public ResponseEntity<Map<String, Object>> getAllEmployees() {
+        try {
+            return buildResponse(true, "Employés récupérés avec succès", employeeService.getAllEmployees(), HttpStatus.OK);
+        } catch (Exception e) {
+            return buildResponse(false, "Erreur lors de la récupération des employés", null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    // GET : Employee par ID
-    @GetMapping("/{id}")
-    public Employee getEmployeeById(@PathVariable Long id) {
-        return employeeService.getEmployeeById(id);  // Retourne l'employé trouvé par son ID
-    }
-
-    // PUT : Maj d'un employee existant
     @PutMapping("/{id}")
-    public Employee updateEmployee(@PathVariable Long id, @RequestBody Employee employee) {
-        return employeeService.updateEmployee(id, employee);  // Passer l'ID et l'objet Employee au service
+    public ResponseEntity<Map<String, Object>> updateEmployee(@PathVariable Long id, @RequestBody Employee employee) {
+        try {
+            Employee updated = employeeService.updateEmployee(id, employee);
+            if (updated != null) {
+                return buildResponse(true, "Employé mis à jour avec succès", updated, HttpStatus.OK);
+            } else {
+                return buildResponse(false, "Employé non trouvé", null, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return buildResponse(false, "Erreur lors de la mise à jour : " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    // DELETE : Supprimer un employé
     @DeleteMapping("/{id}")
-    public void deleteEmployee(@PathVariable Long id) {
-        employeeService.deleteEmployee(id);
+    public ResponseEntity<Map<String, Object>> deleteEmployee(@PathVariable Long id) {
+        try {
+            if (!employeeService.existsById(id)) {
+                return buildResponse(false, "Employé non trouvé avec l'ID: " + id,  Map.of(), HttpStatus.NOT_FOUND);
+            }
+
+            Employee employeeToDelete = employeeService.getEmployeeById(id);
+            if (employeeToDelete.getDepartment() != null) {
+                return buildResponse(false, "Cet employé est lié au département : " + employeeToDelete.getDepartment().getName() + ". La suppression n'est pas autorisée.",  Map.of(), HttpStatus.BAD_REQUEST);
+            }
+
+            employeeService.deleteEmployee(id);
+            return buildResponse(true, "Employé supprimé avec succès",  Map.of(), HttpStatus.OK);
+
+        } catch (NoSuchElementException e) {
+            return buildResponse(false, e.getMessage(), Map.of(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return buildResponse(false, "Erreur lors de la suppression de l'employé: " + e.getMessage(),  Map.of(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
-

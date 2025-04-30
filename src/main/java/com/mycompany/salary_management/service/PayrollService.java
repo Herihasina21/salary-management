@@ -4,6 +4,7 @@ import com.mycompany.salary_management.entity.Payroll;
 import com.mycompany.salary_management.repository.PayrollRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class PayrollService {
@@ -14,12 +15,16 @@ public class PayrollService {
         return payrollRepository.save(payroll);
     }
 
-    public Iterable<Payroll> getAllPayrolls(){
-        return payrollRepository.findAll();
+    public List<Payroll> getAllPayrolls(){
+        return (List<Payroll>) payrollRepository.findAll();
     }
 
     public Payroll getPayrollById(Long id){
         return payrollRepository.findById(id).orElse(null);
+    }
+
+    public boolean existsById(Long id){
+        return payrollRepository.existsById(id);
     }
 
     public Payroll updatePayroll(Long id, Payroll payroll){
@@ -34,4 +39,3 @@ public class PayrollService {
         payrollRepository.deleteById(id);
     }
 }
-
