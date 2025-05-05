@@ -10,11 +10,18 @@ import java.util.List;
 @Setter
 @Entity
 public class Payroll {
-    @Id @GeneratedValue
+    @Id
+    @GeneratedValue
     private Long id;
-    private LocalDate periodStart;  // Début de la période
-    private LocalDate periodEnd;    // Fin de la période
-    private double netSalary;       // Salaire net
+
+    private LocalDate periodStart;
+    private LocalDate periodEnd;
+
+    @ManyToOne
+    private Employee employee;
+
+    @OneToOne
+    private Salary salary;
 
     @OneToMany(mappedBy = "payroll")
     private List<Bonus> bonuses;
@@ -22,6 +29,17 @@ public class Payroll {
     @OneToMany(mappedBy = "payroll")
     private List<Deduction> deductions;
 
-    @ManyToOne
-    private Employee employee;
+    @Transient
+    public double getGrossSalary() {
+        double base = salary != null ? salary.getBaseSalary() : 0.0;
+        double bonus = bonuses != null ? bonuses.stream().mapToDouble(Bonus::getAmount).sum() : 0.0;
+        return base + bonus;
+    }
+
+    @Transient
+    public double getNetSalary() {
+        double gross = getGrossSalary();
+        double deduction = deductions != null ? deductions.stream().mapToDouble(Deduction::getAmount).sum() : 0.0;
+        return gross - deduction;
+    }
 }

@@ -1,5 +1,6 @@
 package com.mycompany.salary_management.controller;
 
+import com.mycompany.salary_management.dto.SalaryDTO;
 import com.mycompany.salary_management.entity.Salary;
 import com.mycompany.salary_management.service.SalaryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class SalaryController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addSalary(@RequestBody Salary salary) {
+    public ResponseEntity<Map<String, Object>> addSalary(@RequestBody SalaryDTO salary) {
         try {
             Salary savedSalary = salaryService.createSalary(salary);
             return buildResponse(true, "Salaire ajouté avec succès", savedSalary, HttpStatus.CREATED);
@@ -59,7 +60,7 @@ public class SalaryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateSalary(@PathVariable Long id, @RequestBody Salary salary) {
+    public ResponseEntity<Map<String, Object>> updateSalary(@PathVariable Long id, @RequestBody SalaryDTO salary) {
         try {
             Salary updatedSalary = salaryService.updateSalary(id, salary);
             if (updatedSalary != null) {

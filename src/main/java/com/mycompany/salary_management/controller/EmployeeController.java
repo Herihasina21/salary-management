@@ -71,11 +71,6 @@ public class EmployeeController {
                 return buildResponse(false, "Employé non trouvé avec l'ID: " + id,  Map.of(), HttpStatus.NOT_FOUND);
             }
 
-            Employee employeeToDelete = employeeService.getEmployeeById(id);
-            if (employeeToDelete.getDepartment() != null) {
-                return buildResponse(false, "Cet employé est lié au département : " + employeeToDelete.getDepartment().getName() + ". La suppression n'est pas autorisée.",  Map.of(), HttpStatus.BAD_REQUEST);
-            }
-
             employeeService.deleteEmployee(id);
             return buildResponse(true, "Employé supprimé avec succès",  Map.of(), HttpStatus.OK);
 

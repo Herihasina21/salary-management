@@ -1,5 +1,6 @@
 package com.mycompany.salary_management.controller;
 
+import com.mycompany.salary_management.dto.PayrollDTO;
 import com.mycompany.salary_management.entity.Payroll;
 import com.mycompany.salary_management.service.PayrollService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,22 +26,23 @@ public class PayrollController {
         return ResponseEntity.status(status).body(response);
     }
 
-    //POST: Crée une nouvelle paie
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addPayroll(@RequestBody Payroll payroll) {
+    public ResponseEntity<Map<String, Object>> addPayroll(@RequestBody PayrollDTO payrollDTO) {
         try {
-            Payroll savedPayroll = payrollService.createPayroll(payroll);
-            return buildResponse(true, "Paie créée avec succès", savedPayroll, HttpStatus.CREATED);
+            Payroll createdPayroll = payrollService.createPayrollFromDTO(payrollDTO);
+            PayrollDTO responseDTO = payrollService.toDTO(createdPayroll);
+            return buildResponse(true, "Paie créée avec succès", responseDTO, HttpStatus.CREATED);
         } catch (Exception e) {
             return buildResponse(false, "Erreur lors de la création de la paie: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
         }
     }
 
+
     // GET : Toutes les paies
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllPayrolls() {
         try {
-            List<Payroll> payrolls = payrollService.getAllPayrolls();
+            List<PayrollDTO> payrolls = payrollService.getAllPayrolls();
             return buildResponse(true, "Paies récupérées avec succès", payrolls, HttpStatus.OK);
         } catch (Exception e) {
             return buildResponse(false, "Erreur lors de la récupération des paies", null, HttpStatus.INTERNAL_SERVER_ERROR);
