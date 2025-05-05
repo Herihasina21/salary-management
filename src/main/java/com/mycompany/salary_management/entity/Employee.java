@@ -21,6 +21,6 @@ public class Employee {
     private LocalDate hireDate;
     private String contractType;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     private Department department;
 }

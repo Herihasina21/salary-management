@@ -1,5 +1,6 @@
 package com.mycompany.salary_management.controller;
 
+import com.mycompany.salary_management.dto.EmployeeDTO;
 import com.mycompany.salary_management.entity.Employee;
 import com.mycompany.salary_management.service.EmployeeService;
 import com.mycompany.salary_management.service.DepartmentService; // Ajout de DepartmentService
@@ -30,9 +31,9 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addEmployee(@RequestBody Employee employee) {
+    public ResponseEntity<Map<String, Object>> addEmployee(@RequestBody EmployeeDTO employeeDTO) {
         try {
-            Employee savedEmployee = employeeService.createEmployee(employee);
+            Employee savedEmployee = employeeService.createEmployee(employeeDTO);
             return buildResponse(true, "Employé ajouté avec succès", savedEmployee, HttpStatus.CREATED);
         } catch (Exception e) {
             e.printStackTrace();
@@ -50,9 +51,9 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateEmployee(@PathVariable Long id, @RequestBody Employee employee) {
+    public ResponseEntity<Map<String, Object>> updateEmployee(@PathVariable Long id, @RequestBody EmployeeDTO employeeDTO) {
         try {
-            Employee updated = employeeService.updateEmployee(id, employee);
+            Employee updated = employeeService.updateEmployee(id, employeeDTO);
             if (updated != null) {
                 return buildResponse(true, "Employé mis à jour avec succès", updated, HttpStatus.OK);
             } else {
