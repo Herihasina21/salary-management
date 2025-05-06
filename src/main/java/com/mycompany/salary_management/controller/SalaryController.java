@@ -27,9 +27,9 @@ public class SalaryController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addSalary(@RequestBody SalaryDTO salary) {
+    public ResponseEntity<Map<String, Object>> addSalary(@RequestBody SalaryDTO salaryDTO) {
         try {
-            Salary savedSalary = salaryService.createSalary(salary);
+            Salary savedSalary = salaryService.createSalary(salaryDTO);
             return buildResponse(true, "Salaire ajouté avec succès", savedSalary, HttpStatus.CREATED);
         } catch (Exception e) {
             return buildResponse(false, "Erreur lors de l'ajout du salaire: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);

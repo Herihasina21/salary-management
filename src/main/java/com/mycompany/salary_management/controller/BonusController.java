@@ -1,5 +1,6 @@
 package com.mycompany.salary_management.controller;
 
+import com.mycompany.salary_management.dto.BonusDTO;
 import com.mycompany.salary_management.entity.Bonus;
 import com.mycompany.salary_management.service.BonusService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,9 @@ public class BonusController {
 
     //POST: Crée un nouveau bonus
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addBonus(@RequestBody Bonus bonus) {
+    public ResponseEntity<Map<String, Object>> addBonus(@RequestBody BonusDTO bonusDTO) {
         try {
-            Bonus savedBonus = bonusService.createBonus(bonus);
+            BonusDTO savedBonus = bonusService.createBonus(bonusDTO);
             return buildResponse(true, "Bonus ajouté avec succès", savedBonus, HttpStatus.CREATED);
         } catch (Exception e) {
             return buildResponse(false, "Erreur lors de l'ajout du bonus: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
@@ -49,7 +50,7 @@ public class BonusController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getBonusById(@PathVariable Long id) {
         try {
-            Bonus bonus = bonusService.getBonusById(id);
+            BonusDTO bonus = bonusService.getBonusById(id);
             if (bonus != null) {
                 return buildResponse(true, "Bonus récupéré avec succès", bonus, HttpStatus.OK);
             } else {
@@ -62,9 +63,9 @@ public class BonusController {
 
     //PUT
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateBonus(@PathVariable Long id, @RequestBody Bonus bonus) {
+    public ResponseEntity<Map<String, Object>> updateBonus(@PathVariable Long id, @RequestBody BonusDTO bonus) {
         try {
-            Bonus updatedBonus = bonusService.updateBonus(id, bonus);
+            BonusDTO updatedBonus = bonusService.updateBonus(id, bonus);
             if (updatedBonus != null) {
                 return buildResponse(true, "Bonus mis à jour avec succès", updatedBonus, HttpStatus.OK);
             } else {

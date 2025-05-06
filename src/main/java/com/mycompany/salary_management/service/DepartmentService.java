@@ -1,5 +1,7 @@
 package com.mycompany.salary_management.service;
 
+import com.mycompany.salary_management.dto.DeductionDTO;
+import com.mycompany.salary_management.entity.Deduction;
 import com.mycompany.salary_management.entity.Department;
 import com.mycompany.salary_management.repository.DepartmentRepository;
 import jakarta.transaction.Transactional;

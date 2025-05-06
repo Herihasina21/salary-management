@@ -1,5 +1,6 @@
 package com.mycompany.salary_management.controller;
 
+import com.mycompany.salary_management.dto.DeductionDTO;
 import com.mycompany.salary_management.entity.Deduction;
 import com.mycompany.salary_management.service.DeductionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,9 @@ public class DeductionController {
 
     //POST: Crée une nouvelle déduction
     @PostMapping
-    public ResponseEntity<Map<String, Object>> addDeduction(@RequestBody Deduction deduction) {
+    public ResponseEntity<Map<String, Object>> addDeduction(@RequestBody DeductionDTO deduction) {
         try {
-            Deduction savedDeduction = deductionService.createDeduction(deduction);
+            DeductionDTO savedDeduction = deductionService.createDeduction(deduction);
             return buildResponse(true, "Déduction ajoutée avec succès", savedDeduction, HttpStatus.CREATED);
         } catch (Exception e) {
             return buildResponse(false, "Erreur lors de l'ajout de la déduction: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
@@ -49,7 +50,7 @@ public class DeductionController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getDeductionById(@PathVariable Long id) {
         try {
-            Deduction deduction = deductionService.getDeductionById(id);
+            DeductionDTO deduction = deductionService.getDeductionById(id);
             if (deduction != null) {
                 return buildResponse(true, "Déduction récupérée avec succès", deduction, HttpStatus.OK);
             } else {
@@ -62,9 +63,9 @@ public class DeductionController {
 
     //PUT
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateDeduction(@PathVariable Long id, @RequestBody Deduction deduction) {
+    public ResponseEntity<Map<String, Object>> updateDeduction(@PathVariable Long id, @RequestBody DeductionDTO deduction) {
         try {
-            Deduction updatedDeduction = deductionService.updateDeduction(id, deduction);
+            DeductionDTO updatedDeduction = deductionService.updateDeduction(id, deduction);
             if (updatedDeduction != null) {
                 return buildResponse(true, "Déduction mise à jour avec succès", updatedDeduction, HttpStatus.OK);
             } else {

@@ -4,6 +4,8 @@ import com.mycompany.salary_management.dto.BonusDTO;
 import com.mycompany.salary_management.dto.DeductionDTO;
 import com.mycompany.salary_management.dto.PayrollDTO;
 import com.mycompany.salary_management.entity.*;
+import com.mycompany.salary_management.repository.BonusRepository;
+import com.mycompany.salary_management.repository.DeductionRepository;
 import com.mycompany.salary_management.repository.EmployeeRepository;
 import com.mycompany.salary_management.repository.PayrollRepository;
 import com.mycompany.salary_management.repository.SalaryRepository;
@@ -25,9 +27,11 @@ public class PayrollService {
     @Autowired
     private SalaryRepository salaryRepository;
 
-    public Payroll createPayroll(Payroll payroll){
-        return payrollRepository.save(payroll);
-    }
+    @Autowired
+    private BonusRepository bonusRepository;
+
+    @Autowired
+    private DeductionRepository deductionRepository;
 
     public List<PayrollDTO> getAllPayrolls() {
         List<Payroll> payrolls = payrollRepository.findAll();
@@ -36,29 +40,102 @@ public class PayrollService {
                 .collect(Collectors.toList());
     }
 
+    public PayrollDTO getPayrollById(Long id){
+        Payroll payroll = payrollRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paie introuvable avec l'id: " + id));
+
+        // Mapper les bonus et déductions vers DTO
+        return getPayrollDTO(payroll);
+    }
+
+    public boolean existsById(Long id){
+        return payrollRepository.existsById(id);
+    }
+
+    public Payroll updatePayroll(Long id, PayrollDTO payrollDTO){
+        if (!payrollRepository.existsById(id)) return null;
+        Payroll payroll = buildPayrollFromDTO(payrollDTO);
+        payroll.setId(id); // forcer l’update
+        return payrollRepository.save(payroll);
+    }
+
+    public void deletePayroll(Long id){
+        payrollRepository.deleteById(id);
+    }
+
     public PayrollDTO toDTO(Payroll payroll) {
+        return getPayrollDTO(payroll);
+    }
+
+    public Payroll createPayroll(PayrollDTO dto) {
+        Payroll payroll = buildPayrollFromDTO(dto);
+        return payrollRepository.save(payroll);
+    }
+
+    private Payroll buildPayrollFromDTO(PayrollDTO dto) {
+        Payroll payroll = new Payroll();
+
+        payroll.setPeriodStart(dto.getPeriodStart());
+        payroll.setPeriodEnd(dto.getPeriodEnd());
+
+        // Employé
+        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Employé introuvable"));
+        payroll.setEmployee(employee);
+
+        // Salaire
+        Salary salary = salaryRepository.findByEmployeeId(dto.getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Salaire introuvable"));
+        payroll.setSalary(salary);
+
+        // Bonus
+        List<Bonus> bonuses = dto.getBonuses() != null
+                ? dto.getBonuses().stream()
+                .map(b -> {
+                    Bonus bonus = bonusRepository.findById(b.getId())
+                            .orElseThrow(() -> new RuntimeException("Bonus introuvable : id=" + b.getId()));
+                    bonus.setPayroll(payroll);
+                    return bonus;
+                })
+                .collect(Collectors.toList())
+                : new ArrayList<>();
+
+        // Déductions
+        List<Deduction> deductions = dto.getDeductions() != null
+                ? dto.getDeductions().stream()
+                .map(d -> {
+                    Deduction deduction = deductionRepository.findById(d.getId())
+                            .orElseThrow(() -> new RuntimeException("Déduction introuvable : id=" + d.getId()));
+                    deduction.setPayroll(payroll);
+                    return deduction;
+                })
+                .collect(Collectors.toList())
+                : new ArrayList<>();
+
+        payroll.setBonuses(bonuses);
+        payroll.setDeductions(deductions);
+
+        return payroll;
+    }
+
+
+    private PayrollDTO getPayrollDTO(Payroll payroll) {
         List<BonusDTO> bonuses = payroll.getBonuses() != null
                 ? payroll.getBonuses().stream()
-                .map(b -> {
-                    BonusDTO dto = new BonusDTO();
-                    dto.setType(b.getType());
-                    dto.setAmount(b.getAmount());
-                    return dto;
-                })
+                .map(BonusService::toBonusDTO)
                 .collect(Collectors.toList())
                 : new ArrayList<>();
 
         List<DeductionDTO> deductions = payroll.getDeductions() != null
                 ? payroll.getDeductions().stream()
-                .map(d -> {
-                    DeductionDTO dto = new DeductionDTO();
-                    dto.setType(d.getType());
-                    dto.setAmount(d.getAmount());
-                    return dto;
-                })
+                .map(DeductionService::toDeductionDTO)
                 .collect(Collectors.toList())
                 : new ArrayList<>();
 
+        return getPayrollDTO(payroll, bonuses, deductions);
+    }
+
+    private PayrollDTO getPayrollDTO(Payroll payroll, List<BonusDTO> bonuses, List<DeductionDTO> deductions) {
         PayrollDTO dto = new PayrollDTO();
         dto.setId(payroll.getId());
         dto.setPeriodStart(payroll.getPeriodStart());
@@ -70,79 +147,7 @@ public class PayrollService {
 
         dto.setEmployeeId(payroll.getEmployee().getId());
         dto.setEmployeeName(payroll.getEmployee().getFirstName() + " " + payroll.getEmployee().getName());
-
         return dto;
     }
 
-
-    public Payroll createPayrollFromDTO(PayrollDTO dto) {
-        Payroll payroll = new Payroll();
-
-        payroll.setPeriodStart(dto.getPeriodStart());
-        payroll.setPeriodEnd(dto.getPeriodEnd());
-
-        // Association Employee (via ID uniquement ici)
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employé introuvable"));
-        payroll.setEmployee(employee);
-
-        // Associer le salaire de base (via Salary)
-        Salary salary = salaryRepository.findByEmployeeId(dto.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Salaire introuvable"));
-        payroll.setSalary(salary);
-
-        // Bonus
-        List<Bonus> bonuses = dto.getBonuses() != null
-                ? dto.getBonuses().stream()
-                .map(b -> {
-                    Bonus bonus = new Bonus();
-                    bonus.setType(b.getType());
-                    bonus.setAmount(b.getAmount());
-                    bonus.setPayroll(payroll);
-                    return bonus;
-                })
-                .collect(Collectors.toList())
-                : new ArrayList<>();
-
-        // Déductions
-        List<Deduction> deductions = dto.getDeductions() != null
-                ? dto.getDeductions().stream()
-                .map(d -> {
-                    Deduction deduction = new Deduction();
-                    deduction.setType(d.getType());
-                    deduction.setAmount(d.getAmount());
-                    deduction.setPayroll(payroll);
-                    return deduction;
-                })
-                .collect(Collectors.toList())
-                : new ArrayList<>();
-
-        payroll.setBonuses(bonuses);
-        payroll.setDeductions(deductions);
-
-        // Sauvegarde complète
-        return payrollRepository.save(payroll);
-    }
-
-
-
-    public Payroll getPayrollById(Long id){
-        return payrollRepository.findById(id).orElse(null);
-    }
-
-    public boolean existsById(Long id){
-        return payrollRepository.existsById(id);
-    }
-
-    public Payroll updatePayroll(Long id, Payroll payroll){
-        if (payrollRepository.existsById(id)){
-            payroll.setId(id);
-            return payrollRepository.save(payroll);
-        }
-        return null;
-    }
-
-    public void deletePayroll(Long id){
-        payrollRepository.deleteById(id);
-    }
 }
