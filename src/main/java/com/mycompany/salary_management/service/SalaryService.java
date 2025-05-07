@@ -1,8 +1,6 @@
 package com.mycompany.salary_management.service;
 
-import com.mycompany.salary_management.dto.EmployeeDTO;
 import com.mycompany.salary_management.dto.SalaryDTO;
-import com.mycompany.salary_management.entity.Department;
 import com.mycompany.salary_management.entity.Employee;
 import com.mycompany.salary_management.entity.Salary;
 import com.mycompany.salary_management.repository.EmployeeRepository;
@@ -37,6 +35,10 @@ public class SalaryService {
 
     public boolean existsById(Long id) {
         return salaryRepository.existsById(id);
+    }
+
+    public boolean isSalaryLinkedToEmployee(Long employeeId) {
+        return salaryRepository.findByEmployeeId(employeeId).isPresent();
     }
 
     public Salary updateSalary(Long id, SalaryDTO salaryDTO){

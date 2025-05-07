@@ -29,6 +29,9 @@ public class SalaryController {
     @PostMapping
     public ResponseEntity<Map<String, Object>> addSalary(@RequestBody SalaryDTO salaryDTO) {
         try {
+        if (salaryService.isSalaryLinkedToEmployee(salaryDTO.getEmployeeId())) {
+                return buildResponse(false, "Cet employé est déjà lié à un salaire", null, HttpStatus.BAD_REQUEST);
+            }
             Salary savedSalary = salaryService.createSalary(salaryDTO);
             return buildResponse(true, "Salaire ajouté avec succès", savedSalary, HttpStatus.CREATED);
         } catch (Exception e) {

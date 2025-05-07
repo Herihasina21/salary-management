@@ -4,6 +4,7 @@ import com.mycompany.salary_management.dto.EmployeeDTO;
 import com.mycompany.salary_management.entity.Employee;
 import com.mycompany.salary_management.service.EmployeeService;
 import com.mycompany.salary_management.service.DepartmentService; // Ajout de DepartmentService
+import com.mycompany.salary_management.service.SalaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,9 @@ public class EmployeeController {
 
     @Autowired
     private DepartmentService departmentService; // Injection de DepartmentService
+
+    @Autowired
+    private SalaryService salaryService;
 
     private ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
         Map<String, Object> response = Map.of(
@@ -69,6 +73,10 @@ public class EmployeeController {
         try {
             if (!employeeService.existsById(id)) {
                 return buildResponse(false, "Employé non trouvé avec l'ID: " + id,  Map.of(), HttpStatus.NOT_FOUND);
+            }
+
+            if (salaryService.isSalaryLinkedToEmployee(id)) {
+                return buildResponse(false, "Cet employé est lié à des salaires. La suppression n'est pas autorisée.", Map.of(), HttpStatus.BAD_REQUEST); // Modification ici
             }
 
             employeeService.deleteEmployee(id);
