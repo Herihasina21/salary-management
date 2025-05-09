@@ -3,6 +3,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -12,6 +15,6 @@ public class Bonus {
     private String type;           // Ex: "Ancienneté", "Performance"
     private double amount;
 
-    @ManyToOne
-    private Payroll payroll;       // Lien vers la fiche de paie
+    @ManyToMany(mappedBy = "bonuses")
+    private List<Payroll> payrolls = new ArrayList<>();
 }

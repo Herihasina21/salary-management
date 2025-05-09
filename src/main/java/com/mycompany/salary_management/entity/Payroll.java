@@ -23,10 +23,20 @@ public class Payroll {
     @OneToOne
     private Salary salary;
 
-    @OneToMany(mappedBy = "payroll")
+    @ManyToMany
+    @JoinTable(
+            name = "payroll_bonus",
+            joinColumns = @JoinColumn(name = "payroll_id"),
+            inverseJoinColumns = @JoinColumn(name = "bonus_id")
+    )
     private List<Bonus> bonuses;
 
-    @OneToMany(mappedBy = "payroll")
+    @ManyToMany
+    @JoinTable(
+            name = "payroll_deduction",
+            joinColumns = @JoinColumn(name = "payroll_id"),
+            inverseJoinColumns = @JoinColumn(name = "deduction_id")
+    )
     private List<Deduction> deductions;
 
     @Transient
