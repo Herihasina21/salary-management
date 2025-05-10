@@ -3,8 +3,11 @@ package com.mycompany.salary_management.controller;
 import com.mycompany.salary_management.dto.PayrollDTO;
 import com.mycompany.salary_management.entity.Payroll;
 import com.mycompany.salary_management.service.PayrollService;
+import com.mycompany.salary_management.service.PdfExportService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +21,9 @@ public class PayrollController {
 
     @Autowired
     private PayrollService payrollService;
+
+    @Autowired
+    private PdfExportService pdfExportService;
 
     private ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
         Map<String, Object> response = new LinkedHashMap<>();
@@ -93,5 +99,16 @@ public class PayrollController {
         } catch (Exception e) {
             return buildResponse(false, "Erreur lors de la suppression de la paie: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> exportPayrollPdf(@PathVariable Long id) {
+        PayrollDTO dto = payrollService.getPayrollById(id);
+        byte[] pdf = pdfExportService.generatePayrollPdf(dto);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payroll-" + id + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }
