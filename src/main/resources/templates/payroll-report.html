@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @bottom-center {
+                content: "Page " counter(page) " / " counter(pages) " - Ressources humaines";
+                font-size: 10px;
+                color: #555;
+            }
+        }
+
+        body {
+            font-family: "DejaVu Sans", sans-serif;
+            font-size: 12px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin: 20px;
+        }
+
+        .logo-container {
+            flex: 0 0 auto;
+            margin-right: 20px;
+        }
+
+        .logo {
+            height: 60px;
+        }
+
+        .title {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-info {
+            margin: 20px;
+        }
+
+        table {
+            width: 90%;
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+
+        th, td {
+            border: 1px solid #aaa;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #ecf0f1;
+        }
+
+        .totals {
+            width: 90%;
+            margin: 20px auto;
+            font-weight: bold;
+        }
+
+        .signature-block {
+            width: 90%;
+            margin: 50px auto 0;
+            text-align: right;
+        }
+
+        .signature-line {
+            margin-top: 50px;
+            border-top: 1px solid #000;
+            width: 200px;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo-container">
+        <img class="logo" th:src="'data:image/png;base64,' + ${logo}" alt="Logo entreprise" />
+    </div>
+    <div class="title">
+        <h1>Fiche de Paie</h1>
+    </div>
+</div>
+
+<div class="header-info">
+    <p><strong>Employé :</strong> <span th:text="${payroll.employeeName}"></span></p>
+    <p><strong>Période :</strong> <span th:text="${payroll.periodStart}"></span> au <span th:text="${payroll.periodEnd}"></span></p>
+</div>
+
+<h3 style="margin-left: 20px;">Bonus</h3>
+<table>
+    <thead><tr><th>Type</th><th>Montant</th></tr></thead>
+    <tbody>
+    <tr th:each="bonus : ${payroll.bonuses}">
+        <td th:text="${bonus.type}"></td>
+        <td th:text="${bonus.amount} + ' Ar'"></td>
+    </tr>
+    </tbody>
+</table>
+
+<h3 style="margin-left: 20px;">Déductions</h3>
+<table>
+    <thead><tr><th>Type</th><th>Montant</th></tr></thead>
+    <tbody>
+    <tr th:each="deduction : ${payroll.deductions}">
+        <td th:text="${deduction.type}"></td>
+        <td th:text="${deduction.amount} + ' Ar'"></td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="totals">
+    <p>Salaire Brut : <span th:text="${payroll.grossSalary} + ' Ar'"></span></p>
+    <p>Salaire Net à Payer : <span th:text="${payroll.netSalary} + ' Ar'"></span></p>
+</div>
+
+<div class="signature-block">
+    <p>Date : <span th:text="${today}"></span></p>
+    <div class="signature-line">Responsable RH</div>
+</div>
+
+</body>
+</html>
