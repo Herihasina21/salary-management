@@ -135,4 +135,14 @@ public class PayrollController {
             return buildResponse(false, "Erreur lors de l'envoi de la fiche de paie : " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PostMapping("/send-all")
+    public ResponseEntity<?> sendAllPayrolls() {
+        List<String> errors = payrollService.sendAllPayrollsByEmail();
+        if (errors.isEmpty()) {
+            return buildResponse(true, "Tous les emails de paie ont été envoyés avec succès", null, HttpStatus.OK);
+        } else {
+            return buildResponse(false, "Des erreurs sont survenues", errors, HttpStatus.MULTI_STATUS);
+        }
+    }
 }
