@@ -1,6 +1,7 @@
 package com.mycompany.salary_management.service;
 
 import com.mycompany.salary_management.dto.DeductionDTO;
+import com.mycompany.salary_management.entity.Bonus;
 import com.mycompany.salary_management.entity.Deduction;
 import com.mycompany.salary_management.repository.DeductionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,10 @@ public class DeductionService {
         deduction.setType(dto.getType());
         deduction.setAmount(dto.getAmount());
         return deduction;
+    }
+    public boolean isDeductionAssociatedWithPayroll(Long id) {
+        Deduction deduction = deductionRepository.findById(id).orElse(null);
+        return deduction != null && !deduction.getPayrolls().isEmpty();
     }
 }
 

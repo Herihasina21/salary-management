@@ -72,5 +72,10 @@ public class BonusService {
         bonus.setAmount(dto.getAmount());
         return bonus;
     }
+
+    public boolean isBonusAssociatedWithPayroll(Long id) {
+        Bonus bonus = bonusRepository.findById(id).orElse(null);
+        return bonus != null && !bonus.getPayrolls().isEmpty();
+    }
 }
 

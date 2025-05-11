@@ -28,7 +28,7 @@ public class SalaryService {
         // Vérifier si l'employé a déjà un salaire
         if (isSalaryLinkedToEmployee(salaryDTO.getEmployeeId())) {
             throw new IllegalStateException(
-                    String.format("L'employé %s %s est déjà lié à un salaire",
+                    String.format("L'employé %s %s à déjà un salaire",
                             employee.getName(),
                             employee.getFirstName())
             );
@@ -73,7 +73,7 @@ public class SalaryService {
                     .orElse("ce salaire");
 
             throw new IllegalStateException(
-                    "Impossible de supprimer " + employeeName + " : lié à des fiches de paie"
+                    employeeName + " ne peut pas être supprimé car il est associé à des fiches de paie existantes."
             );
         }
     }

@@ -1,12 +1,13 @@
 package com.mycompany.salary_management.controller;
 
 import com.mycompany.salary_management.dto.BonusDTO;
-import com.mycompany.salary_management.entity.Bonus;
 import com.mycompany.salary_management.service.BonusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -17,11 +18,10 @@ public class BonusController {
     private BonusService bonusService;
 
     private ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
-        Map<String, Object> response = Map.of(
-                "success", success,
-                "message", message,
-                "data", data
-        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+        response.put("message", message);
+        response.put("data", data); // Permet les valeurs null
         return ResponseEntity.status(status).body(response);
     }
 
@@ -80,12 +80,16 @@ public class BonusController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteBonus(@PathVariable Long id) {
         try {
-            if (bonusService.existsById(id)) {
-                bonusService.deleteBonus(id);
-                return buildResponse(true, "Bonus supprimé avec succès", null, HttpStatus.OK);
-            } else {
+            if (!bonusService.existsById(id)) {
                 return buildResponse(false, "Bonus non trouvé avec l'ID: " + id, null, HttpStatus.NOT_FOUND);
             }
+
+            if (bonusService.isBonusAssociatedWithPayroll(id)) {
+                return buildResponse(false, "Le bonus ne peut pas être supprimé car il est déjà associé à une ou plusieurs fiches de paie", null, HttpStatus.CONFLICT);
+            }
+
+            bonusService.deleteBonus(id);
+            return buildResponse(true, "Bonus supprimé avec succès", null, HttpStatus.OK);
         } catch (Exception e) {
             return buildResponse(false, "Erreur lors de la suppression du bonus: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
