@@ -13,25 +13,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 @Service
 public class PayrollService {
 
     @Autowired
     private PayrollRepository payrollRepository;
-
     @Autowired
     private EmployeeRepository employeeRepository;
-
     @Autowired
     private SalaryRepository salaryRepository;
-
     @Autowired
     private BonusRepository bonusRepository;
-
     @Autowired
     private DeductionRepository deductionRepository;
+    @Autowired
+    private PdfExportService pdfExportService;
+    @Autowired
+    private EmailService emailService;
 
     public List<PayrollDTO> getAllPayrolls() {
         return payrollRepository.findAll().stream()
@@ -131,22 +133,37 @@ public class PayrollService {
         payrollRepository.deleteById(id);
     }
 
+    public byte[] generatePayrollPdf(Long payrollId) {
+        PayrollDTO dto = getPayrollById(payrollId);
+        return pdfExportService.generatePayrollPdf(dto);
+    }
+
+    public void sendPayrollByEmail(Long payrollId) {
+        PayrollDTO dto = getPayrollById(payrollId);
+        byte[] pdf = pdfExportService.generatePayrollPdf(dto);
+
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("employeeName", dto.getEmployeeName());
+        variables.put("periodStart", dto.getPeriodStartFormatted());
+        variables.put("periodEnd", dto.getPeriodEndFormatted());
+
+        emailService.sendPayrollEmailWithTemplate(
+                dto.getEmployeeEmail(),
+                "Fiche de paie - " + dto.getPeriodEndFormatted(),
+                "payroll-mail", // chemin relatif au dossier templates/
+                variables,
+                pdf,
+                "fiche_paie_" + payrollId + ".pdf"
+        );
+    }
+
     public PayrollDTO toDTO(Payroll payroll) {
         return getPayrollDTO(payroll);
     }
 
-    // ♻️ Méthode commune pour create + update
     private void updatePayrollFields(Payroll payroll, PayrollDTO dto) {
         payroll.setPeriodStart(dto.getPeriodStart());
         payroll.setPeriodEnd(dto.getPeriodEnd());
-
-        Employee employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Employé introuvable"));
-        payroll.setEmployee(employee);
-
-        Salary salary = salaryRepository.findByEmployeeId(dto.getEmployeeId())
-                .orElseThrow(() -> new RuntimeException("Salaire introuvable"));
-        payroll.setSalary(salary);
 
         List<Bonus> bonuses = dto.getBonuses() != null
                 ? dto.getBonuses().stream()
@@ -192,6 +209,7 @@ public class PayrollService {
         dto.setDeductions(deductions);
         dto.setEmployeeId(payroll.getEmployee().getId());
         dto.setEmployeeName(payroll.getEmployee().getFirstName() + " " + payroll.getEmployee().getName());
+        dto.setEmployeeEmail(payroll.getEmployee().getEmail());
         return dto;
     }
 }

@@ -22,9 +22,6 @@ public class PayrollController {
     @Autowired
     private PayrollService payrollService;
 
-    @Autowired
-    private PdfExportService pdfExportService;
-
     private ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("success", success);
@@ -117,13 +114,25 @@ public class PayrollController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> exportPayrollPdf(@PathVariable Long id) {
-        PayrollDTO dto = payrollService.getPayrollById(id);
-        byte[] pdf = pdfExportService.generatePayrollPdf(dto);
+    public ResponseEntity<?> exportPayrollPdf(@PathVariable Long id) {
+        try {
+            byte[] pdf = payrollService.generatePayrollPdf(id);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payroll-" + id + ".pdf")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdf);
+        } catch (Exception e) {
+            return buildResponse(false, "Erreur lors de la génération du PDF: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payroll-" + id + ".pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+    @GetMapping("/{id}/email")
+    public ResponseEntity<?> sendPayroll(@PathVariable Long id) {
+        try {
+            payrollService.sendPayrollByEmail(id);
+            return buildResponse(true, "Fiche de paie envoyée par mail avec succès", null, HttpStatus.OK);
+        } catch (Exception e) {
+            return buildResponse(false, "Erreur lors de l'envoi de la fiche de paie : " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
