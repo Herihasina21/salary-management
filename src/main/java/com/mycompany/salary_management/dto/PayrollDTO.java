@@ -27,6 +27,7 @@ public class PayrollDTO {
 
     private Long employeeId;
     private String employeeName;
+    private String employeeEmail;
 
     // Format ISO par défaut (YYYY-MM-DD)
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
