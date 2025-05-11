@@ -157,6 +157,22 @@ public class PayrollService {
         );
     }
 
+    public List<String> sendAllPayrollsByEmail() {
+        var payrolls = getAllPayrolls();
+        List<String> errors = new ArrayList<>();
+
+        for (PayrollDTO dto : payrolls) {
+            try {
+                sendPayrollByEmail(dto.getId());
+            } catch (Exception e) {
+                var message = "Erreur pour " + dto.getEmployeeName() + " (ID " + dto.getId() + ") : " + e.getMessage();
+                System.err.println(message);
+                errors.add(message);
+            }
+        }
+        return errors;
+    }
+
     public PayrollDTO toDTO(Payroll payroll) {
         return getPayrollDTO(payroll);
     }
