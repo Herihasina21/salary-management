@@ -20,11 +20,23 @@ public class SalaryService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
-    public Salary createSalary(SalaryDTO salaryDTO){
+    public Salary createSalary(SalaryDTO salaryDTO) {
+        // Récupérer l'employé d'abord pour avoir ses informations
+        Employee employee = employeeRepository.findById(salaryDTO.getEmployeeId())
+                .orElseThrow(() -> new IllegalArgumentException("Employé introuvable avec l'id : " + salaryDTO.getEmployeeId()));
+
+        // Vérifier si l'employé a déjà un salaire
+        if (isSalaryLinkedToEmployee(salaryDTO.getEmployeeId())) {
+            throw new IllegalStateException(
+                    String.format("L'employé %s %s est déjà lié à un salaire",
+                            employee.getName(),
+                            employee.getFirstName())
+            );
+        }
+
         Salary salary = fromDTO(salaryDTO, Optional.empty());
         return salaryRepository.save(salary);
     }
-
     public List<Salary> getAllSalary(){
         return salaryRepository.findAll();
     }
@@ -41,16 +53,29 @@ public class SalaryService {
         return salaryRepository.findByEmployeeId(employeeId).isPresent();
     }
 
-    public Salary updateSalary(Long id, SalaryDTO salaryDTO){
+    public Salary updateSalary(Long id, SalaryDTO salaryDTO) {
         Salary existingSalary = salaryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Salary introuvable avec l'id : " + id));
-
         Salary updated = fromDTO(salaryDTO, Optional.of(existingSalary));
         return salaryRepository.save(updated);
     }
 
-    public void deleteSalary(Long id){
-        salaryRepository.deleteById(id);
+    public void deleteSalary(Long id) {
+        try {
+            salaryRepository.deleteById(id);
+
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            Optional<Salary> salaryOpt = salaryRepository.findById(id);
+            String employeeName = salaryOpt.map(s ->
+                            s.getEmployee() != null
+                                    ? "le salaire de " + s.getEmployee().getName() + " " + s.getEmployee().getFirstName()
+                                    : "ce salaire")
+                    .orElse("ce salaire");
+
+            throw new IllegalStateException(
+                    "Impossible de supprimer " + employeeName + " : lié à des fiches de paie"
+            );
+        }
     }
 
     private Salary fromDTO(SalaryDTO dto, Optional<Salary> existing) {

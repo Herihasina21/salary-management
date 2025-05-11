@@ -3,11 +3,13 @@ package com.mycompany.salary_management.controller;
 import com.mycompany.salary_management.dto.SalaryDTO;
 import com.mycompany.salary_management.entity.Salary;
 import com.mycompany.salary_management.service.SalaryService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -18,24 +20,26 @@ public class SalaryController {
     private SalaryService salaryService;
 
     private ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
-        Map<String, Object> response = Map.of(
-                "success", success,
-                "message", message,
-                "data", data
-        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", success);
+        response.put("message", message != null ? message : "");
+        response.put("data", data != null ? data : "");
         return ResponseEntity.status(status).body(response);
     }
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> addSalary(@RequestBody SalaryDTO salaryDTO) {
         try {
-        if (salaryService.isSalaryLinkedToEmployee(salaryDTO.getEmployeeId())) {
-                return buildResponse(false, "Cet employé est déjà lié à un salaire", null, HttpStatus.BAD_REQUEST);
-            }
             Salary savedSalary = salaryService.createSalary(salaryDTO);
             return buildResponse(true, "Salaire ajouté avec succès", savedSalary, HttpStatus.CREATED);
+        } catch (IllegalStateException e) {
+            // Ceci attrapera notre nouvelle exception avec le nom/prénom
+            return buildResponse(false, e.getMessage(), null, HttpStatus.BAD_REQUEST);
+        } catch (IllegalArgumentException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return buildResponse(false, "Erreur lors de l'ajout du salaire: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
+            return buildResponse(false, "Erreur lors de l'ajout du salaire: " + e.getMessage(),
+                    null, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -63,16 +67,16 @@ public class SalaryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateSalary(@PathVariable Long id, @RequestBody SalaryDTO salary) {
+    public ResponseEntity<Map<String, Object>> updateSalary(@PathVariable Long id, @RequestBody SalaryDTO salaryDTO) {
         try {
-            Salary updatedSalary = salaryService.updateSalary(id, salary);
-            if (updatedSalary != null) {
-                return buildResponse(true, "Salaire mis à jour avec succès", updatedSalary, HttpStatus.OK);
-            } else {
-                return buildResponse(false, "Salaire non trouvé", null, HttpStatus.NOT_FOUND);
-            }
+            Salary updatedSalary = salaryService.updateSalary(id, salaryDTO);
+            return buildResponse(true, "Salaire mis à jour avec succès", updatedSalary, HttpStatus.OK);
+        } catch (EntityNotFoundException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.NOT_FOUND);
+        } catch (IllegalStateException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return buildResponse(false, "Erreur lors de la mise à jour du salaire: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+            return buildResponse(false, "Erreur lors de la mise à jour du salaire", null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -81,12 +85,14 @@ public class SalaryController {
         try {
             if (salaryService.existsById(id)) {
                 salaryService.deleteSalary(id);
-                return buildResponse(true, "Salaire supprimé avec succès", null, HttpStatus.OK);
+                return buildResponse(true, "Le salaire a été supprimé avec succès", null, HttpStatus.OK);
             } else {
-                return buildResponse(false, "Salaire non trouvé avec l'ID: " + id, null, HttpStatus.NOT_FOUND);
+                return buildResponse(false, "Aucun salaire trouvé avec l'ID: " + id, null, HttpStatus.NOT_FOUND);
             }
+        } catch (IllegalStateException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.CONFLICT);
         } catch (Exception e) {
-            return buildResponse(false, "Erreur lors de la suppression du salaire: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+            return buildResponse(false, "Erreur lors de la suppression du salaire", null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

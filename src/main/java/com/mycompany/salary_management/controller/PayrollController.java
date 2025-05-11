@@ -38,9 +38,19 @@ public class PayrollController {
         try {
             Payroll createdPayroll = payrollService.createPayroll(payrollDTO);
             PayrollDTO responseDTO = payrollService.toDTO(createdPayroll);
-            return buildResponse(true, "Paie créée avec succès", responseDTO, HttpStatus.CREATED);
+            return buildResponse(true,
+                    "Fiche de paie créée pour " + responseDTO.getEmployeeName(),
+                    responseDTO,
+                    HttpStatus.CREATED);
+        } catch (IllegalStateException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.CONFLICT);
+        } catch (IllegalArgumentException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return buildResponse(false, "Erreur lors de la création de la paie: " + e.getMessage(), null, HttpStatus.BAD_REQUEST);
+            return buildResponse(false,
+                    "Erreur technique lors de la création",
+                    null,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -75,16 +85,21 @@ public class PayrollController {
     public ResponseEntity<Map<String, Object>> updatePayroll(@PathVariable Long id, @RequestBody PayrollDTO dto) {
         try {
             Payroll updatedPayroll = payrollService.updatePayroll(id, dto);
-            if (updatedPayroll != null) {
-                PayrollDTO responseDTO = payrollService.toDTO(updatedPayroll);
-                return buildResponse(true, "Paie mise à jour avec succès", responseDTO, HttpStatus.OK);
-            } else {
-                return buildResponse(false, "Paie non trouvée avec l'ID: " + id, null, HttpStatus.NOT_FOUND);
-            }
+            PayrollDTO responseDTO = payrollService.toDTO(updatedPayroll);
+            return buildResponse(true, "Fiche de paie mise à jour avec succès", responseDTO, HttpStatus.OK);
+        } catch (IllegalStateException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.CONFLICT);
+        } catch (IllegalArgumentException e) {
+            return buildResponse(false, e.getMessage(), null, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            return buildResponse(false, "Erreur lors de la mise à jour de la paie: " + e.getMessage(), null, HttpStatus.INTERNAL_SERVER_ERROR);
+            return buildResponse(false,
+                    "Erreur technique lors de la mise à jour",
+                    null,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     // DELETE : Supprimer une paie
     @DeleteMapping("/{id}")
@@ -92,7 +107,7 @@ public class PayrollController {
         try {
             if (payrollService.existsById(id)) {
                 payrollService.deletePayroll(id);
-                return buildResponse(true, "Paie supprimée avec succès", null, HttpStatus.OK);
+                return buildResponse(true, "Fiche de paie supprimée avec succès", null, HttpStatus.OK);
             } else {
                 return buildResponse(false, "Paie non trouvée avec l'ID: " + id, null, HttpStatus.NOT_FOUND);
             }

@@ -94,7 +94,11 @@
 
 <div class="header-info">
     <p><strong>Employé :</strong> <span th:text="${payroll.employeeName}"></span></p>
-    <p><strong>Période :</strong> <span th:text="${payroll.periodStart}"></span> au <span th:text="${payroll.periodEnd}"></span></p>
+    <p><strong>Période :</strong>
+        <span th:text="${#temporals.format(payroll.periodStart, 'dd/MM/yyyy')}"></span>
+        au
+        <span th:text="${#temporals.format(payroll.periodEnd, 'dd/MM/yyyy')}"></span>
+    </p>
 </div>
 
 <h3 style="margin-left: 20px;">Bonus</h3>

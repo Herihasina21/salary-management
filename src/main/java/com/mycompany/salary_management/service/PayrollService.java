@@ -50,16 +50,81 @@ public class PayrollService {
     }
 
     public Payroll createPayroll(PayrollDTO dto) {
-        Payroll payroll = new Payroll();
-        updatePayrollFields(payroll, dto);
-        return payrollRepository.save(payroll);
+        try {
+            // Vérification de l'employé d'abord
+            Employee employee = employeeRepository.findById(dto.getEmployeeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Employé non trouvé (ID: " + dto.getEmployeeId() + ")"));
+
+            // Vérification du salaire
+            Salary salary = salaryRepository.findByEmployeeId(dto.getEmployeeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Aucun salaire trouvé pour " +
+                            employee.getFirstName() + " " + employee.getName()));
+
+            // Vérification si une fiche existe déjà
+            payrollRepository.findBySalaryId(salary.getId()).ifPresent(p -> {
+                throw new IllegalStateException(
+                        "Une fiche de paie existe déjà pour l'employé " +
+                                employee.getFirstName() + " " + employee.getName()
+                );
+            });
+
+            Payroll payroll = new Payroll();
+            payroll.setEmployee(employee);
+            payroll.setSalary(salary);
+            updatePayrollFields(payroll, dto);
+
+            return payrollRepository.save(payroll);
+
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Solution de repli si la vérification précédente a échoué
+            Employee employee = employeeRepository.findById(dto.getEmployeeId()).orElse(null);
+            String employeeName = (employee != null)
+                    ? employee.getFirstName() + " " + employee.getName()
+                    : "cet employé";
+
+            throw new IllegalStateException(
+                    "Une fiche de paie existe déjà pour " + employeeName
+            );
+        }
     }
 
     public Payroll updatePayroll(Long id, PayrollDTO dto) {
-        Payroll payroll = payrollRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Paie introuvable avec l'id: " + id));
-        updatePayrollFields(payroll, dto);
-        return payrollRepository.save(payroll);
+        try {
+            Payroll existingPayroll = payrollRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Paie introuvable avec l'id: " + id));
+
+            Employee newEmployee = employeeRepository.findById(dto.getEmployeeId())
+                    .orElseThrow(() -> new RuntimeException("Employé introuvable"));
+
+            // Modifiez cette partie pour inclure le nom de l'employé dans le message d'erreur
+            Salary newSalary = salaryRepository.findByEmployeeId(dto.getEmployeeId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Aucun salaire trouvé pour " + newEmployee.getFirstName() + " " + newEmployee.getName()
+                    ));
+
+            // Vérification si le salaire change et existe déjà dans une autre fiche
+            if (!existingPayroll.getSalary().getId().equals(newSalary.getId())) {
+                payrollRepository.findBySalaryId(newSalary.getId()).ifPresent(p -> {
+                    throw new IllegalStateException(
+                            "L'employé " + newEmployee.getFirstName() + " " + newEmployee.getName() +
+                                    " a déjà une fiche de paie existante"
+                    );
+                });
+            }
+
+            updatePayrollFields(existingPayroll, dto);
+            return payrollRepository.save(existingPayroll);
+
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            Employee employee = employeeRepository.findById(dto.getEmployeeId()).orElse(null);
+            String employeeName = (employee != null)
+                    ? employee.getFirstName() + " " + employee.getName()
+                    : "cet employé";
+
+            throw new IllegalStateException(
+                    "L'employé " + employeeName + " a déjà une fiche de paie existante"
+            );
+        }
     }
 
     public void deletePayroll(Long id){
