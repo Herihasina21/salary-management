@@ -1,10 +1,14 @@
 package com.mycompany.salary_management.entity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "app_user")
 public class User {
@@ -12,8 +16,6 @@ public class User {
     @GeneratedValue
     private Long id;
     private String username;
+    private String email;
     private String password;
-
-    @Enumerated(EnumType.STRING)
-    private Role role;
 }
