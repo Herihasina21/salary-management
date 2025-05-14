@@ -41,13 +41,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         jwt = authHeader.substring(7);
+
+        // Nouvelle validation
+        if (jwt == null || jwt.equals("undefined") || jwt.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // Vérification de la blacklist
         if (tokenBlacklistService.isBlacklisted(jwt)) {

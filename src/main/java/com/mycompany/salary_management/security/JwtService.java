@@ -1,11 +1,15 @@
 package com.mycompany.salary_management.security;
 
+import com.mycompany.salary_management.entity.User;
+import com.mycompany.salary_management.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -16,8 +20,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
-
+    private final UserRepository userRepository;
     @Value("${jwt.secret-key}")
     private String secretKey;
 
@@ -41,8 +46,17 @@ public class JwtService {
             Map<String, Object> extraClaims,
             UserDetails userDetails
     ) {
+        // Récupérez l'utilisateur complet depuis la base de données
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
+
+        // Ajoutez le username dans les claims
+        extraClaims.put("username", user.getUsername());
+
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
+
+
 
     private String buildToken(
             Map<String, Object> extraClaims,

@@ -18,4 +18,6 @@ public class User {
     private String username;
     private String email;
     private String password;
+    @Builder.Default
+    private String role = "ADMIN";
 }

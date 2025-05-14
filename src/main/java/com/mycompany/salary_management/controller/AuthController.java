@@ -59,10 +59,16 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDTO loginDTO) {
         try {
             JwtResponse jwtResponse = authService.login(loginDTO);
+
+            // Créez la structure de données pour la réponse
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("token", jwtResponse.getToken());
+            responseData.put("username", jwtResponse.getUsername()); // Ajoutez le username
+
             return buildResponse(
                     true,
                     "Connexion réussie",
-                    jwtResponse,
+                    responseData, // Utilisez la nouvelle structure
                     HttpStatus.OK
             );
         } catch (Exception e) {

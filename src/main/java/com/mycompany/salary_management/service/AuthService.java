@@ -15,6 +15,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.springframework.http.HttpStatus.*;
 
 @Service
@@ -63,25 +66,25 @@ public class AuthService {
             var user = userRepository.findByEmail(loginDTO.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
 
+            // Créez une map pour les claims supplémentaires
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("username", user.getUsername()); // Ajoutez le username dans les claims
+
             var jwtToken = jwtService.generateToken(
+                    extraClaims, // Passez les claims supplémentaires
                     org.springframework.security.core.userdetails.User
                             .withUsername(user.getEmail())
                             .password(user.getPassword())
-                            .authorities("USER")
+                            .roles("ADMIN") // ou "ADMIN" selon votre besoin
                             .build()
             );
 
-            return new JwtResponse(jwtToken);
+            return new JwtResponse(jwtToken, user.getUsername()); // Retournez le username aussi
 
         } catch (BadCredentialsException e) {
             throw new ResponseStatusException(
                     UNAUTHORIZED,
                     "Email ou mot de passe incorrect"
-            );
-        } catch (Exception e) {
-            throw new ResponseStatusException(
-                    INTERNAL_SERVER_ERROR,
-                    "Une erreur est survenue lors de la connexion"
             );
         }
     }
