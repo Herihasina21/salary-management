@@ -1,18 +1,18 @@
 package com.mycompany.salary_management.controller;
 
-import com.mycompany.salary_management.dto.JwtResponse;
-import com.mycompany.salary_management.dto.LoginDTO;
-import com.mycompany.salary_management.dto.RegisterDTO;
+import com.mycompany.salary_management.dto.*;
+import com.mycompany.salary_management.entity.User;
+import com.mycompany.salary_management.security.JwtService;
+import com.mycompany.salary_management.security.UserDetailsServiceImpl;
 import com.mycompany.salary_management.service.AuthService;
 import com.mycompany.salary_management.service.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,9 +22,17 @@ public class AuthController {
 
     private final AuthService authService;
     private final TokenBlacklistService tokenBlacklistService;
-    public AuthController(AuthService authService, TokenBlacklistService tokenBlacklistService) {
+    private final UserDetailsServiceImpl userDetailsService;
+    private final JwtService jwtService;
+
+    public AuthController(AuthService authService,
+                          TokenBlacklistService tokenBlacklistService,
+                          UserDetailsServiceImpl userDetailsService,
+                          JwtService jwtService) {
         this.authService = authService;
         this.tokenBlacklistService = tokenBlacklistService;
+        this.userDetailsService = userDetailsService;
+        this.jwtService = jwtService;
     }
 
     public static ResponseEntity<Map<String, Object>> buildResponse(boolean success, String message, Object data, HttpStatus status) {
@@ -33,6 +41,61 @@ public class AuthController {
         response.put("message", message);
         response.put("data", data);
         return ResponseEntity.status(status).body(response);
+    }
+
+    @PutMapping("/user/profile")
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestBody UpdateProfileDTO updateDTO,
+            Principal principal
+    ) {
+        try {
+            User updatedUser = authService.updateProfile(principal.getName(), updateDTO);
+
+            // Régénérer le token avec les nouvelles informations
+            UserDetails userDetails = userDetailsService.loadUserByUsername(updatedUser.getEmail());
+            String newToken = jwtService.generateToken(userDetails);
+
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("user", updatedUser);
+            responseData.put("token", newToken);
+
+            return buildResponse(
+                    true,
+                    "Profil mis à jour avec succès",
+                    responseData,
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            return buildResponse(
+                    false,
+                    "Échec de la mise à jour: " + e.getMessage(),
+                    null,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @PutMapping("/user/change-password")
+    public ResponseEntity<Map<String, Object>> changePassword(
+            @RequestBody ChangePasswordDTO changePasswordDTO,
+            Principal principal
+    ) {
+        try {
+            authService.changePassword(principal.getName(), changePasswordDTO);
+            return buildResponse(
+                    true,
+                    "Mot de passe changé avec succès",
+                    null,
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            return buildResponse(
+                    false,
+                    "Mot de passe actuel incorrect",
+                    null,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     @PostMapping("/register")
@@ -63,7 +126,7 @@ public class AuthController {
             // Créez la structure de données pour la réponse
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("token", jwtResponse.getToken());
-            responseData.put("username", jwtResponse.getUsername()); // Ajoutez le username
+            responseData.put("username", jwtResponse.getUsername());
 
             return buildResponse(
                     true,

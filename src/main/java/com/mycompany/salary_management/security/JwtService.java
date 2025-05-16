@@ -46,13 +46,13 @@ public class JwtService {
             Map<String, Object> extraClaims,
             UserDetails userDetails
     ) {
-        // Récupérez l'utilisateur complet depuis la base de données
+        // Récupérez l'utilisateur complet depuis la bd
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
 
         // Ajoutez le username dans les claims
         extraClaims.put("username", user.getUsername());
-
+        extraClaims.put("role", user.getRole());
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
