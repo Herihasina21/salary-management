@@ -18,6 +18,7 @@
             font-size: 12px;
             margin: 0;
             padding: 0;
+            color: #333;
         }
 
         .header {
@@ -25,6 +26,8 @@
             align-items: center;
             justify-content: flex-start;
             margin: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 15px;
         }
 
         .logo-container {
@@ -41,30 +44,76 @@
             text-align: center;
         }
 
+        .title h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 24px;
+        }
+
         .header-info {
             margin: 20px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .header-info p {
+            margin: 5px 0;
         }
 
         table {
             width: 90%;
             border-collapse: collapse;
             margin: 20px auto;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         th, td {
-            border: 1px solid #aaa;
-            padding: 8px;
+            border: 1px solid #ddd;
+            padding: 10px;
             text-align: left;
         }
 
         th {
-            background-color: #ecf0f1;
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        td.amount {
+            text-align: right;
+            font-family: monospace;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .empty-row td {
+            text-align: center;
+            color: #777;
+            font-style: italic;
+            padding: 15px;
         }
 
         .totals {
             width: 90%;
-            margin: 20px auto;
+            margin: 30px auto;
             font-weight: bold;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .totals p {
+            display: flex;
+            justify-content: space-between;
+            max-width: 300px;
+            margin: 8px auto;
+        }
+
+        .totals span {
+            font-family: monospace;
         }
 
         .signature-block {
@@ -77,7 +126,16 @@
             margin-top: 50px;
             border-top: 1px solid #000;
             width: 200px;
-            float: right;
+            display: inline-block;
+            text-align: center;
+            padding-top: 5px;
+        }
+
+        h3 {
+            margin-left: 5%;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
         }
     </style>
 </head>
@@ -101,31 +159,47 @@
     </p>
 </div>
 
-<h3 style="margin-left: 20px;">Bonus</h3>
+<h3>Bonus</h3>
 <table>
-    <thead><tr><th>Type</th><th>Montant</th></tr></thead>
+    <thead>
+    <tr>
+        <th>Type</th>
+        <th class="amount">Montant</th>
+    </tr>
+    </thead>
     <tbody>
+    <tr th:if="${payroll.bonuses.empty}">
+        <td colspan="2" class="empty-row">Aucun bonus pour cette période</td>
+    </tr>
     <tr th:each="bonus : ${payroll.bonuses}">
         <td th:text="${bonus.type}"></td>
-        <td th:text="${bonus.amount} + ' Ar'"></td>
+        <td class="amount" th:text="${#numbers.formatDecimal(bonus.amount, 1, 2, 'POINT')} + ' Ar'"></td>
     </tr>
     </tbody>
 </table>
 
-<h3 style="margin-left: 20px;">Déductions</h3>
+<h3>Déductions</h3>
 <table>
-    <thead><tr><th>Type</th><th>Montant</th></tr></thead>
+    <thead>
+    <tr>
+        <th>Type</th>
+        <th class="amount">Montant</th>
+    </tr>
+    </thead>
     <tbody>
+    <tr th:if="${payroll.deductions.empty}">
+        <td colspan="2" class="empty-row">Aucune déduction pour cette période</td>
+    </tr>
     <tr th:each="deduction : ${payroll.deductions}">
         <td th:text="${deduction.type}"></td>
-        <td th:text="${deduction.amount} + ' Ar'"></td>
+        <td class="amount" th:text="${#numbers.formatDecimal(deduction.amount, 1, 2, 'POINT')} + ' Ar'"></td>
     </tr>
     </tbody>
 </table>
 
 <div class="totals">
-    <p>Salaire Brut : <span th:text="${payroll.grossSalary} + ' Ar'"></span></p>
-    <p>Salaire Net à Payer : <span th:text="${payroll.netSalary} + ' Ar'"></span></p>
+    <p>Salaire Brut : <span th:text="${#numbers.formatDecimal(payroll.grossSalary, 1, 2, 'POINT')} + ' Ar'"></span></p>
+    <p>Salaire Net à Payer : <span th:text="${#numbers.formatDecimal(payroll.netSalary, 1, 2, 'POINT')} + ' Ar'"></span></p>
 </div>
 
 <div class="signature-block">

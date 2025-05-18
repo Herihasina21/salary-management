@@ -22,7 +22,7 @@ public class PdfExportService {
 
     private String loadLogoAsBase64() {
         try {
-            var resource = new ClassPathResource("static/images/logo.png");
+            var resource = new ClassPathResource("static/images/logo-transparent.png");
             byte[] bytes = resource.getInputStream().readAllBytes();
             return Base64.getEncoder().encodeToString(bytes);
         } catch (IOException e) {
