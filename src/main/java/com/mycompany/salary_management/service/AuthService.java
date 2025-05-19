@@ -13,8 +13,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.*;
 
@@ -26,6 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
 
     public String register(RegisterDTO registerDTO) {
         if (userRepository.existsByEmail(registerDTO.getEmail())) {
@@ -114,7 +119,6 @@ public class AuthService {
     }
 
     public void changePassword(String email, ChangePasswordDTO changePasswordDTO) {
-        // Accès aux propriétés via les getters générés par Lombok
         String currentPassword = changePasswordDTO.getCurrentPassword();
         String newPassword = changePasswordDTO.getNewPassword();
 
@@ -137,6 +141,51 @@ public class AuthService {
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    //reiniatiliser mdp
+    public void initiatePasswordReset(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé"));
+
+        String resetToken = UUID.randomUUID().toString();
+        user.setResetToken(resetToken);
+        user.setResetTokenExpiry(Date.from(Instant.now().plus(1, ChronoUnit.HOURS)));
+        userRepository.save(user);
+
+        try {
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("username", user.getUsername());
+            variables.put("resetLink", "http://localhost:5173/reset-password?token=" + resetToken);
+
+            // Utilisez la nouvelle méthode sendEmail
+            emailService.sendEmail(
+                    user.getEmail(),
+                    "Demande de réinitialisation de mot de passe",
+                    "reset-password-email",
+                    variables
+            );
+        } catch (Exception e) {
+            System.err.println("Erreur lors de l'envoi de l'email: " + e.getMessage());
+        }
+    }
+
+    public void completePasswordReset(String token, String newPassword) {
+        User user = userRepository.findByResetToken(token)
+                .orElseThrow(() -> new RuntimeException("Token invalide"));
+
+        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().before(new Date())) {
+            throw new RuntimeException("Le token a expiré");
+        }
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new RuntimeException("Le mot de passe doit contenir au moins 8 caractères");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
         userRepository.save(user);
     }
 }

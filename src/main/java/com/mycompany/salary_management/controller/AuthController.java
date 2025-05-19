@@ -175,6 +175,49 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody ForgotPasswordDTO forgotPasswordDTO) {
+        try {
+            authService.initiatePasswordReset(forgotPasswordDTO.getEmail());
+            return buildResponse(
+                    true,
+                    "Un email de réinitialisation a été envoyé",
+                    null,
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            return buildResponse(
+                    false,
+                    e.getMessage(),
+                    null,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO) {
+        try {
+            authService.completePasswordReset(
+                    resetPasswordDTO.getToken(),
+                    resetPasswordDTO.getNewPassword()
+            );
+            return buildResponse(
+                    true,
+                    "Mot de passe réinitialisé avec succès",
+                    null,
+                    HttpStatus.OK
+            );
+        } catch (Exception e) {
+            return buildResponse(
+                    false,
+                    e.getMessage(),
+                    null,
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
     private String extractToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith("Bearer ")) {
